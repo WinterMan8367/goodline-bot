@@ -43,6 +43,7 @@ def test_callback(call):
       keyboard.row(inmenu)
       testbot.edit_message_text("Выберите подраздел:", call.message.chat.id, call.message.id, reply_markup = keyboard)
       testbot.answer_callback_query(call.id)
+      # commit
     else:
       testbot.send_message(call.message.chat.id, "Error. Data: " + call.data)
       testbot.answer_callback_query(call.id)
