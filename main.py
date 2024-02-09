@@ -35,6 +35,14 @@ def test_callback(call):
       keyboard.row(inmenu)
       testbot.edit_message_text("Выберите подраздел:", call.message.chat.id, call.message.id, reply_markup = keyboard)
       testbot.answer_callback_query(call.id)
+    elif call.data == "money":
+      keyboard = types.InlineKeyboardMarkup()
+      receipts = types.InlineKeyboardButton(text = "Поступления", callback_data = "receipts")
+      production = types.InlineKeyboardButton(text = "Реализация", callback_data = "production")
+      keyboard.row(receipts, production)
+      keyboard.row(inmenu)
+      testbot.edit_message_text("Выберите подраздел:", call.message.chat.id, call.message.id, reply_markup = keyboard)
+      testbot.answer_callback_query(call.id)
     else:
       testbot.send_message(call.message.chat.id, "Error. Data: " + call.data)
       testbot.answer_callback_query(call.id)
