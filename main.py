@@ -17,34 +17,56 @@ class User:
   def __str__(self):
     return f"user_id: {self.user_id}\nhistory: {self.history}\nprevios_page: {self.previos_page}\nback: {self.back}"
 
-@testbot.message_handler(commands = ['start'])
-def start_keyboard(message):
-  keyboard = types.InlineKeyboardMarkup()
+# Обозначение кнопки
+def record_button(text_button, callback):
+  return types.InlineKeyboardButton(text = text_button, callback_data = callback)
 
-  button_ACB = types.InlineKeyboardButton(text = "Активная клиентская база", callback_data = "ACB")
-  button_money = types.InlineKeyboardButton(text = "Деньги", callback_data = "money")
-  button_sales = types.InlineKeyboardButton(text = "Продажи", callback_data = "sales")
+# Запуск бота + отправка номера телефона ------------------------------------ (Доделать)
+@testbot.message_handler(commands=['start'])
+def start_message(message):
+    keyboard = types.ReplyKeyboardMarkup(resize_keyboard=True)
+    reg_button = types.KeyboardButton(text="Отправить номер телефона",
+    request_contact=True)
+    keyboard.add(reg_button)
+    testbot.send_message(message.chat.id, 'Привет! Я — корпоративный бот аналитик для сотрудников Е-Лайт-Телеком.\nОтправь мне свой номер телефона, чтобы я проверил, а действительно ли ты наш работник.', reply_markup=keyboard)
+# ---------------------------------------------------------------------------------
+
+# Главное меню бота ---> {АКБ}, {Деньги}, {Продажи}
+@testbot.message_handler(commands = ['menu'])
+def start_keyboard(message):
+  keyboard = types.InlineKeyboardMarkup() # Вызов кастомной клавиатуры
+
+  button_ACB = record_button("Активная клиентская база", "ACB")
+  button_money = record_button("Деньги", "money")
+  button_sales = record_button("Продажи", "sales")
 
   keyboard.add(button_ACB)
   keyboard.add(button_money, button_sales)
 
-  testbot.send_message(message.chat.id, f"Привет, {message.from_user.first_name} ✌️\nЧто ты хочешь узнать?", reply_markup = keyboard)
+  testbot.send_message(message.chat.id, "Какую информацию ты хочешь узнать? 💬", reply_markup = keyboard)
 
+  # Присвоение класса [User]
   user_id = message.from_user.id
   user = User(user_id)
   user_dict[message.chat.id] = user
+# -----------------------------------------------------
 
 @testbot.message_handler(commands = ['debug'])
 def debug(message):
   keyboard = types.InlineKeyboardMarkup()
   reload_btn = types.InlineKeyboardButton(text = "Обновить", callback_data = "reload")
   keyboard.add(reload_btn)
-  testbot.send_message(message.chat.id, user_dict)
-  testbot.send_message(message.chat.id, user_dict[message.chat.id], reply_markup = keyboard)
+  text = ""
+  for item in user_dict:
+    text += f"\n{item};"
+  testbot.send_message(message.chat.id, f"Текущие пользователи:\n{text}\n---------------------\nТекущий сеанс:\n\n{user_dict[message.chat.id]}", reply_markup = keyboard)
 
+# Навигация в меню
 @testbot.callback_query_handler(func = lambda call: True)
 def test_callback(call):
   if call.message:
+
+    # Вернуться на один раздел назад
 
     if call.data == "back":
       user = user_dict[call.message.chat.id]
@@ -58,20 +80,20 @@ def test_callback(call):
       user.back = True
       testbot.answer_callback_query(call.id)
 
-    # --> 1) Меню [Общая АКБ], [Новые], [Отток], [Возврат]
+    # АКБ ---> {Общая АКБ}, {Новые}, {Отток}, {Возврат}
     if call.data == "ACB":
       keyboard = types.InlineKeyboardMarkup()
 
-      button_total_ACB = types.InlineKeyboardButton(text = "Общая АКБ уникального абонента", callback_data = "total_ACB")
-      button_new = types.InlineKeyboardButton(text = "Новые", callback_data = "new")
-      button_outflow = types.InlineKeyboardButton(text = "Отток", callback_data = "outflow")
-      button_return = types.InlineKeyboardButton(text = "Возврат", callback_data = "return")
+      button_total_ACB = record_button("Общая АКБ уникального абонента", "total_ACB")
+      button_new = record_button("Новые", "new")
+      button_outflow = record_button("Отток", "outflow")
+      button_return = record_button("Возврат", "return")
 
-      keyboard.add(button_total_ACB);
-      keyboard.add(button_new, button_outflow, button_return);
+      keyboard.add(button_total_ACB)
+      keyboard.add(button_new, button_outflow, button_return)
       keyboard.add(inmenu)
 
-      testbot.edit_message_text('Выберете пункт, по которому хотите получить результат:', call.message.chat.id, call.message.id, reply_markup = keyboard)
+      testbot.edit_message_text('Выбери пункт, по которому хочешь получить результат:', call.message.chat.id, call.message.id, reply_markup = keyboard)
 
       user = user_dict[call.message.chat.id]
       if not user.back:
@@ -80,18 +102,19 @@ def test_callback(call):
         user.back = False
 
       testbot.answer_callback_query(call.id)
+    # -----------------------------------------------------
 
-    # --> 2) Меню [Поступления], [Реализация]
+    # Деньги ---> {Поступления}, {Реализация}
     elif call.data == "money":
       keyboard = types.InlineKeyboardMarkup()
 
-      button_cash_receipts = types.InlineKeyboardButton(text = "Поступления", callback_data = "cash_receipts")
-      button_implementation = types.InlineKeyboardButton(text = "Реализация", callback_data = "implementation")
+      button_cash_receipts = record_button("Поступления", "cash_receipts")
+      button_implementation = record_button("Реализация", "implementation")
 
-      keyboard.add(button_cash_receipts, button_implementation);
+      keyboard.add(button_cash_receipts, button_implementation)
       keyboard.add(inmenu)
 
-      testbot.edit_message_text('Выберете пункт, по которому хотите получить результат:', call.message.chat.id, call.message.id, reply_markup = keyboard)
+      testbot.edit_message_text('Выбери пункт, по которому хочешь получить результат:', call.message.chat.id, call.message.id, reply_markup = keyboard)
 
       user = user_dict[call.message.chat.id]
       if not user.back:
@@ -100,18 +123,19 @@ def test_callback(call):
         user.back = False
 
       testbot.answer_callback_query(call.id)
+    # -----------------------------------------------------
 
-    # --> 3) Меню [Услуги], [Оборудование]
+    # Продажи ---> {Услуги}, {Оборудование}
     elif call.data == "sales":
       keyboard = types.InlineKeyboardMarkup()
 
-      button_services = types.InlineKeyboardButton(text = "Услуги", callback_data = "services")
-      button_equipment = types.InlineKeyboardButton(text = "Оборудование", callback_data = "equipment")
+      button_services = record_button("Услуги", "services")
+      button_equipment = record_button("Оборудование", "equipment")
 
       keyboard.add(button_services, button_equipment);
       keyboard.add(inmenu)
 
-      testbot.edit_message_text('Выберете пункт, по которому хотите получить результат:', call.message.chat.id, call.message.id, reply_markup = keyboard)
+      testbot.edit_message_text('Выбери пункт, по которому хочешь получить результат:', call.message.chat.id, call.message.id, reply_markup = keyboard)
 
       user = user_dict[call.message.chat.id]
       if not user.back:
@@ -120,14 +144,15 @@ def test_callback(call):
         user.back = False
 
       testbot.answer_callback_query(call.id)
+    # -----------------------------------------------------
 
-    # --> Меню [МКД], [Общая], [Гепон]
-    elif call.data == "total_ACB" or call.data == "new" or call.data == "outflow" or call.data == "return" or call.data == "cash_receipts" or call.data == "implementation":
+    # {МКД}, {Общая}, {Гепон}:
+    elif call.data in ["total_ACB", "new", "outflow", "return", "cash_receipts", "implementation"]:
       keyboard = types.InlineKeyboardMarkup()
 
-      button_apartment = types.InlineKeyboardButton(text = "МКД (Многоквартирные дома)", callback_data = "apartment")
-      button_general = types.InlineKeyboardButton(text = "Общая", callback_data = "general")
-      button_gepon = types.InlineKeyboardButton(text = "Гепон", callback_data = "gepon")
+      button_apartment = record_button("МКД (Многоквартирные дома)", "apartment")
+      button_general = record_button("Общая", "general")
+      button_gepon = record_button("Гепон", "gepon")
 
       if call.data == "cash_receipts" or call.data == "implementation":
         button_apartment2 = types.InlineKeyboardButton(text = "МКД (Многоквартирные дома)", callback_data = "apartment_money")
@@ -140,14 +165,17 @@ def test_callback(call):
         keyboard.add(button_apartment)
         keyboard.add(button_general, button_gepon)
       keyboard.add(back, inmenu)
+    # -----------------------------------------------------
 
       testbot.edit_message_text('Выберете пункт, по которому хотите получить результат:', call.message.chat.id, call.message.id, reply_markup = keyboard)
+      
       user = user_dict[call.message.chat.id]
       if not user.back:
         user.previos_page = user.history[-1]
         user.history.append(call.data)
       else:
         user.back = False
+
       testbot.answer_callback_query(call.id)
 
     # --> Меню [Все города], [По городам], [По районам]
@@ -175,12 +203,14 @@ def test_callback(call):
       keyboard.add(back, inmenu)
 
       testbot.edit_message_text('Выберете пункт, по которому хотите получить результат:', call.message.chat.id, call.message.id, reply_markup = keyboard)
+
       user = user_dict[call.message.chat.id]
       if not user.back:
         user.previos_page = user.history[-1]
         user.history.append(call.data)
       else:
         user.back = False
+
       testbot.answer_callback_query(call.id)
 
     # --> Меню [По статусу], [Платящая]
@@ -194,12 +224,14 @@ def test_callback(call):
       keyboard.add(back, inmenu)
 
       testbot.edit_message_text('Выберете пункт, по которому хотите получить результат:', call.message.chat.id, call.message.id, reply_markup = keyboard)
+
       user = user_dict[call.message.chat.id]
       if not user.back:
         user.previos_page = user.history[-1]
         user.history.append(call.data)
       else:
         user.back = False
+
       testbot.answer_callback_query(call.id)
 
     # --> Меню [Предыдущий месяц], [Текущий год], [Статистика за 3 года]
@@ -225,12 +257,14 @@ def test_callback(call):
       keyboard.add(back, inmenu)
 
       testbot.edit_message_text('Выберете пункт, по которому хотите получить результат:', call.message.chat.id, call.message.id, reply_markup = keyboard)
+
       user = user_dict[call.message.chat.id]
       if not user.back:
         user.previos_page = user.history[-1]
         user.history.append(call.data)
       else:
         user.back = False
+
       testbot.answer_callback_query(call.id)
 
       # --> Меню [По всем каналам], [Выбор канала]
@@ -244,12 +278,14 @@ def test_callback(call):
       keyboard.add(back, inmenu)
 
       testbot.edit_message_text('Выберете пункт, по которому хотите получить результат:', call.message.chat.id, call.message.id, reply_markup = keyboard)
+
       user = user_dict[call.message.chat.id]
       if not user.back:
         user.previos_page = user.history[-1]
         user.history.append(call.data)
       else:
         user.back = False
+
       testbot.answer_callback_query(call.id)
 
     # --> Меню [Таблица], [Диаграмма], [Эксель]
@@ -264,12 +300,14 @@ def test_callback(call):
       keyboard.add(back, inmenu)
 
       testbot.edit_message_text('Выберете пункт, по которому хотите получить результат:', call.message.chat.id, call.message.id, reply_markup = keyboard)
+
       user = user_dict[call.message.chat.id]
       if not user.back:
         user.previos_page = user.history[-1]
         user.history.append(call.data)
       else:
         user.back = False
+
       testbot.answer_callback_query(call.id)
 
     elif call.data == "inmenu":
@@ -293,7 +331,10 @@ def test_callback(call):
       keyboard = types.InlineKeyboardMarkup()
       reload_btn = types.InlineKeyboardButton(text = "Обновить", callback_data = "reload")
       keyboard.add(reload_btn)
-      testbot.edit_message_text(user_dict[call.message.chat.id], call.message.chat.id, call.message.id, reply_markup = keyboard)
+      text = ""
+      for item in user_dict:
+        text += f"\n{item};"
+      testbot.edit_message_text(f"Текущие пользователи:\n{text}\n---------------------\nТекущий сеанс:\n\n{user_dict[call.message.chat.id]}", call.message.chat.id, call.message.id, reply_markup = keyboard)
       testbot.answer_callback_query(call.id)
 
     else:
