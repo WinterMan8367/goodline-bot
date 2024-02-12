@@ -21,15 +21,24 @@ class User:
 def record_button(text_button, callback):
   return types.InlineKeyboardButton(text = text_button, callback_data = callback)
 
+def record_func(user, data):
+  if not user.back:
+    user.history.append(data)
+  else:
+    user.back = False
+
 # Запуск бота + отправка номера телефона ------------------------------------ (Доделать)
-@testbot.message_handler(commands=['start'])
+@testbot.message_handler(commands = ['start'])
 def start_message(message):
-    keyboard = types.ReplyKeyboardMarkup(resize_keyboard=True)
-    reg_button = types.KeyboardButton(text="Отправить номер телефона",
-    request_contact=True)
-    keyboard.add(reg_button)
-    testbot.send_message(message.chat.id, 'Привет! Я — корпоративный бот аналитик для сотрудников Е-Лайт-Телеком.\nОтправь мне свой номер телефона, чтобы я проверил, а действительно ли ты наш работник.', reply_markup=keyboard)
+  keyboard = types.ReplyKeyboardMarkup(resize_keyboard = True)
+  reg_button = types.KeyboardButton(text = "Отправить номер телефона", request_contact = True)
+  keyboard.add(reg_button)
+  testbot.send_message(message.chat.id, 'Привет! Я — корпоративный бот-аналитик для сотрудников Е-Лайт-Телеком.\nЯ предоставляю им структурированную информацию по выбранным категориям в виде отчётов, графиков, эксель-таблицы.\n\nОтправь мне свой номер телефона, чтобы я проверил, а действительно ли ты наш работник.', reply_markup=keyboard)
 # ---------------------------------------------------------------------------------
+
+@testbot.message_handler(content_types = ['contact'])
+def echo(message):
+  testbot.send_message(message.chat.id, message.contact.phone_number)
 
 # Главное меню бота ---> {АКБ}, {Деньги}, {Продажи}
 @testbot.message_handler(commands = ['menu'])
@@ -80,6 +89,8 @@ def test_callback(call):
       user.back = True
       testbot.answer_callback_query(call.id)
 
+    user = user_dict[call.message.chat.id]
+
     # АКБ ---> {Общая АКБ}, {Новые}, {Отток}, {Возврат}
     if call.data == "ACB":
       keyboard = types.InlineKeyboardMarkup()
@@ -95,11 +106,7 @@ def test_callback(call):
 
       testbot.edit_message_text('Выбери пункт, по которому хочешь получить результат:', call.message.chat.id, call.message.id, reply_markup = keyboard)
 
-      user = user_dict[call.message.chat.id]
-      if not user.back:
-        user.history.append(call.data)
-      else:
-        user.back = False
+      record_func(user, call.data)
 
       testbot.answer_callback_query(call.id)
     # -----------------------------------------------------
@@ -116,11 +123,7 @@ def test_callback(call):
 
       testbot.edit_message_text('Выбери пункт, по которому хочешь получить результат:', call.message.chat.id, call.message.id, reply_markup = keyboard)
 
-      user = user_dict[call.message.chat.id]
-      if not user.back:
-        user.history.append(call.data)
-      else:
-        user.back = False
+      record_func(user, call.data)
 
       testbot.answer_callback_query(call.id)
     # -----------------------------------------------------
@@ -137,11 +140,7 @@ def test_callback(call):
 
       testbot.edit_message_text('Выбери пункт, по которому хочешь получить результат:', call.message.chat.id, call.message.id, reply_markup = keyboard)
 
-      user = user_dict[call.message.chat.id]
-      if not user.back:
-        user.history.append(call.data)
-      else:
-        user.back = False
+      record_func(user, call.data)
 
       testbot.answer_callback_query(call.id)
     # -----------------------------------------------------
@@ -169,12 +168,7 @@ def test_callback(call):
 
       testbot.edit_message_text('Выберете пункт, по которому хотите получить результат:', call.message.chat.id, call.message.id, reply_markup = keyboard)
       
-      user = user_dict[call.message.chat.id]
-      if not user.back:
-        user.previos_page = user.history[-1]
-        user.history.append(call.data)
-      else:
-        user.back = False
+      record_func(user, call.data)
 
       testbot.answer_callback_query(call.id)
 
@@ -204,12 +198,7 @@ def test_callback(call):
 
       testbot.edit_message_text('Выберете пункт, по которому хотите получить результат:', call.message.chat.id, call.message.id, reply_markup = keyboard)
 
-      user = user_dict[call.message.chat.id]
-      if not user.back:
-        user.previos_page = user.history[-1]
-        user.history.append(call.data)
-      else:
-        user.back = False
+      record_func(user, call.data)
 
       testbot.answer_callback_query(call.id)
 
@@ -225,12 +214,7 @@ def test_callback(call):
 
       testbot.edit_message_text('Выберете пункт, по которому хотите получить результат:', call.message.chat.id, call.message.id, reply_markup = keyboard)
 
-      user = user_dict[call.message.chat.id]
-      if not user.back:
-        user.previos_page = user.history[-1]
-        user.history.append(call.data)
-      else:
-        user.back = False
+      record_func(user, call.data)
 
       testbot.answer_callback_query(call.id)
 
@@ -258,12 +242,7 @@ def test_callback(call):
 
       testbot.edit_message_text('Выберете пункт, по которому хотите получить результат:', call.message.chat.id, call.message.id, reply_markup = keyboard)
 
-      user = user_dict[call.message.chat.id]
-      if not user.back:
-        user.previos_page = user.history[-1]
-        user.history.append(call.data)
-      else:
-        user.back = False
+      record_func(user, call.data)
 
       testbot.answer_callback_query(call.id)
 
@@ -279,12 +258,7 @@ def test_callback(call):
 
       testbot.edit_message_text('Выберете пункт, по которому хотите получить результат:', call.message.chat.id, call.message.id, reply_markup = keyboard)
 
-      user = user_dict[call.message.chat.id]
-      if not user.back:
-        user.previos_page = user.history[-1]
-        user.history.append(call.data)
-      else:
-        user.back = False
+      record_func(user, call.data)
 
       testbot.answer_callback_query(call.id)
 
@@ -301,12 +275,7 @@ def test_callback(call):
 
       testbot.edit_message_text('Выберете пункт, по которому хотите получить результат:', call.message.chat.id, call.message.id, reply_markup = keyboard)
 
-      user = user_dict[call.message.chat.id]
-      if not user.back:
-        user.previos_page = user.history[-1]
-        user.history.append(call.data)
-      else:
-        user.back = False
+      record_func(user, call.data)
 
       testbot.answer_callback_query(call.id)
 
@@ -322,20 +291,23 @@ def test_callback(call):
 
       testbot.edit_message_text("Вы вернулись в главное меню. Выберите раздел:", call.message.chat.id, call.message.id, reply_markup = keyboard)
 
-      user_dict[call.message.chat.id].history.clear()
-      user_dict[call.message.chat.id].previos_page = None
+      user.history.clear()
+      user.previos_page = None
 
       testbot.answer_callback_query(call.id)
 
     elif call.data == "reload":
-      keyboard = types.InlineKeyboardMarkup()
-      reload_btn = types.InlineKeyboardButton(text = "Обновить", callback_data = "reload")
-      keyboard.add(reload_btn)
-      text = ""
-      for item in user_dict:
-        text += f"\n{item};"
-      testbot.edit_message_text(f"Текущие пользователи:\n{text}\n---------------------\nТекущий сеанс:\n\n{user_dict[call.message.chat.id]}", call.message.chat.id, call.message.id, reply_markup = keyboard)
-      testbot.answer_callback_query(call.id)
+      try:
+        keyboard = types.InlineKeyboardMarkup()
+        reload_btn = types.InlineKeyboardButton(text = "Обновить", callback_data = "reload")
+        keyboard.add(reload_btn)
+        text = ""
+        for item in user_dict:
+          text += f"\n{item};"
+        testbot.edit_message_text(f"Текущие пользователи:\n{text}\n---------------------\nТекущий сеанс:\n\n{user_dict[call.message.chat.id]}", call.message.chat.id, call.message.id, reply_markup = keyboard)
+        testbot.answer_callback_query(call.id)
+      except:
+        testbot.answer_callback_query(call.id)
 
     else:
       testbot.send_message(call.message.chat.id, "Error. Data: " + call.data)
