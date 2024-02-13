@@ -5,60 +5,95 @@ testbot = telebot.TeleBot("6454477981:AAFT67o3MnnNlXtjzGZezpOkLaNkw819N_E")
 inmenu = types.InlineKeyboardButton(text = "Главное меню", callback_data = "inmenu")
 back = types.InlineKeyboardButton(text = "Назад", callback_data = "back")
 
+# Создание класса и словаря данных как аналог сессии, чтобы держать активных юзеров в боте.
 user_dict = {}
-
 class User:
-  def __init__(self, user_id):
-    self.user_id = user_id
+  def __init__(self, phone_number):
+    self.phone_number = phone_number
     self.history = []
     self.back = False
 
   def __str__(self):
-    return f"user_id: {self.user_id}\nhistory: {self.history}\nback: {self.back}"
+    return f"phone_number: {self.phone_number}\nhistory: {self.history}\nback: {self.back}"
 
 # Обозначение кнопки
 def record_button(text_button, callback):
   return types.InlineKeyboardButton(text = text_button, callback_data = callback)
 
+# Ужимка повторяющегося кода.
 def record_func(user, data):
   if not user.back:
     user.history.append(data)
   else:
     user.back = False
 
+# Проверка пользователя на то, относится ли он к сотрудникам компании.
+def user_verify(message, phone):
+  # Псевдо-база данных. Для тестов, в последствии при получении доступа - поменять.
+  test_numbers = [{'phone_number': '+79050784610', 'first_name': 'Игорь', 'last_name': 'Черных'},
+                  {'phone_number': '+78005553535', 'first_name': 'Вася', 'last_name': 'Белых'},
+                  {'phone_number': '+79234567890', 'first_name': 'Ваня', 'last_name': 'Седых'},
+                  {'phone_number': '+71234567890', 'first_name': 'Гоша', 'last_name': 'Бубнов'},
+                  {'phone_number': '+72349874523', 'first_name': 'Кеша', 'last_name': 'Иванов'}]
+  
+  check = False
+
+  for item in test_numbers:
+    # Если указанный номер телефона есть в списке пользователей, то выполняем и прерываем цикл.
+    if item['phone_number'] == phone:
+      check = item
+
+      # Присвоение класса [User]
+      chat_id = message.chat.id
+      if user_dict.get(chat_id) == None:
+        phone_number = phone
+        user = User(phone_number)
+        user_dict[chat_id] = user
+
+      break;
+
+  return check
+
 # Запуск бота + отправка номера телефона ------------------------------------ (Доделать)
 @testbot.message_handler(commands = ['start'])
 def start_message(message):
-  keyboard = types.ReplyKeyboardMarkup(resize_keyboard = True)
-  reg_button = types.KeyboardButton(text = "Отправить номер телефона", request_contact = True)
-  keyboard.add(reg_button)
-  testbot.send_message(message.chat.id, 'Привет! Я — корпоративный бот-аналитик для сотрудников Е-Лайт-Телеком.\nЯ предоставляю им структурированную информацию по выбранным категориям в виде отчётов, графиков, эксель-таблицы.\n\nОтправь мне свой номер телефона, чтобы я проверил, а действительно ли ты наш работник.', reply_markup=keyboard)
+  if user_dict.get(message.chat.id) == None:
+    keyboard = types.ReplyKeyboardMarkup(resize_keyboard = True)
+    reg_button = types.KeyboardButton(text = "Отправить номер телефона", request_contact = True)
+    keyboard.add(reg_button)
+    testbot.send_message(message.chat.id, 'Привет! Я — корпоративный бот-аналитик для сотрудников Е-Лайт-Телеком.\nЯ предоставляю им структурированную информацию по выбранным категориям в виде отчётов, графиков, эксель-таблицы.\n\nОтправь мне свой номер телефона, чтобы я проверил, а действительно ли ты наш работник.', reply_markup=keyboard)
+  else:
+    testbot.send_message(message.chat.id, 'Вы уже запустили бота!')
 # ---------------------------------------------------------------------------------
 
 @testbot.message_handler(content_types = ['contact'])
-def echo(message):
-  testbot.send_message(message.chat.id, message.contact.phone_number, reply_markup = types.ReplyKeyboardRemove())
+def find_phone(message):
+  user_object = user_verify(message, message.contact.phone_number)
+
+  if user_object:
+    testbot.send_message(message.chat.id, f"Ваш номер телефона: {user_object['phone_number']}.\n\nВы прошли проверку!\nЗдравствуйте, {user_object['first_name']} {user_object['last_name']}!", reply_markup = types.ReplyKeyboardRemove())
+    start_keyboard(message)
+  else:
+    testbot.send_message(message.chat.id, f"Ваш номер телефона: {message.contact.phone_number}.\n\nВы не прошли проверку!", reply_markup = types.ReplyKeyboardRemove())
 
 # Запуск бота [/Start] + Главное меню ---> {АКБ}, {Деньги}, {Продажи}
 @testbot.message_handler(commands = ['menu'])
 def start_keyboard(message):
-  keyboard = types.InlineKeyboardMarkup()
+  if user_dict.get(message.chat.id) != None:
+    keyboard = types.InlineKeyboardMarkup()
 
-  button_ACB = record_button("Активная клиентская база", "ACB")
-  button_money = record_button("Деньги", "money")
-  button_sales = record_button("Продажи", "sales")
+    button_ACB = record_button("Активная клиентская база", "ACB")
+    button_money = record_button("Деньги", "money")
+    button_sales = record_button("Продажи", "sales")
 
-  keyboard.add(button_ACB)
-  keyboard.add(button_money, button_sales)
+    keyboard.add(button_ACB)
+    keyboard.add(button_money, button_sales)
 
-  testbot.send_message(message.chat.id, "Какую информацию ты хочешь узнать? 💬", reply_markup = keyboard)
-
-  # Присвоение класса [User]
-  if user_dict.get(message.chat.id) == None:
-    user_id = message.from_user.id
-    user = User(user_id)
-    user_dict[message.chat.id] = user
-  else: user.history.clear()
+    testbot.send_message(message.chat.id, "Какую информацию ты хочешь узнать? 💬", reply_markup = keyboard)
+    
+    user_dict[message.chat.id].history.clear()
+  else:
+    testbot.send_message(message.chat.id, "Сначала пройдите проверку, прежде чем использовать бота!")
 
 # -----------------------------------------------------
   
@@ -80,7 +115,16 @@ def test_callback(call):
     keyboard = types.InlineKeyboardMarkup()
     chat_id = call.message.chat.id
     msg_id = call.message.id
+
+    if user_dict.get(chat_id) == None:
+      testbot.send_message(chat_id, "Авторизуйтесь по новой с помощью команды /start, прежде чем использовать бота!")
+      testbot.answer_callback_query(call.id)
+      return
+
     user = user_dict[chat_id]
+    if not user_verify(call.message, user.phone_number):
+      testbot.send_message(chat_id, f"Вы более не находитесь в списке сотрудников, доступ к боту прекращён.")
+      return
 
     # Вернуться на один раздел назад
     if call.data == "back":
