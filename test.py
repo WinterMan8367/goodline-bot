@@ -11,10 +11,11 @@ class User:
   def __init__(self, phone_number):
     self.phone_number = phone_number
     self.history = []
+    self.menu_id = None
     self.back = False
 
   def __str__(self):
-    return f"phone_number: {self.phone_number}\nhistory: {self.history}\nback: {self.back}"
+    return f"phone_number: {self.phone_number}\nhistory: {self.history}\nmenu_id: {self.menu_id}\nback: {self.back}"
 
 # Обозначение кнопки
 def record_button(text_button, callback):
@@ -26,6 +27,22 @@ def record_func(user, data):
     user.history.append(data)
   else:
     user.back = False
+# ---------------------------------------------------------------------------------
+
+
+
+
+
+@testbot.message_handler(commands=["graf"])
+def send_photo_file(message):
+  testbot.send_photo(message.chat.id, 'https://i.imgur.com/ofwPfHE.png')
+
+
+
+
+# --------------------------------------------------------------------------------- (ГовноДоделать)
+  
+  
 
 # Проверка пользователя на то, относится ли он к сотрудникам компании.
 def user_verify(message, phone):
@@ -88,9 +105,14 @@ def start_keyboard(message):
     keyboard.add(button_ACB)
     keyboard.add(button_money, button_sales)
 
-    testbot.send_message(message.chat.id, "Какую информацию ты хочешь узнать? 💬", reply_markup = keyboard)
+    testbot.send_message(message.chat.id, f"Какую информацию ты хочешь узнать? 💬", reply_markup = keyboard)
     
-    user_dict[message.chat.id].history.clear()
+    user = user_dict[message.chat.id]
+    msg_count = 2 if message.contact else 1
+    if user.menu_id != None:
+      testbot.delete_message(message.chat.id, user.menu_id)
+    user.menu_id = message.id + msg_count
+    user.history.clear()
   else:
     testbot.send_message(message.chat.id, "Сначала пройдите проверку, прежде чем использовать бота!")
 
