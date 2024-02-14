@@ -44,11 +44,10 @@ def user_verify(message, phone):
       check = item
 
       # Присвоение класса [User]
-      chat_id = message.chat.id
-      if user_dict.get(chat_id) == None:
+      if user_dict.get(message.chat.id) == None:
         phone_number = phone
         user = User(phone_number)
-        user_dict[chat_id] = user
+        user_dict[message.chat.id] = user
 
       break;
 
@@ -122,19 +121,17 @@ def test_callback(call):
       return
 
     user = user_dict[chat_id]
+
     if not user_verify(call.message, user.phone_number):
       testbot.send_message(chat_id, f"Вы более не находитесь в списке сотрудников, доступ к боту прекращён.")
+      testbot.answer_callback_query(call.id)
       return
 
     # Вернуться на один раздел назад
     if call.data == "back":
       user.history.pop()
-
       call.data = user.history[-1] if len(user.history) != 0 else "inmenu"
-
       user.back = True
-
-      testbot.answer_callback_query(call.id)
 
     if call.data == "reload":
       try:
@@ -146,7 +143,6 @@ def test_callback(call):
           text += f"\n{item};"
 
         testbot.edit_message_text(f"Текущие пользователи:\n{text}\n---------------------\nТекущий сеанс:\n\n{user}", chat_id, msg_id, reply_markup = keyboard)
-
         testbot.answer_callback_query(call.id)
       except:
         testbot.answer_callback_query(call.id)
@@ -162,11 +158,7 @@ def test_callback(call):
       keyboard.add(button_new, button_outflow, button_return)
       keyboard.add(inmenu)
 
-      testbot.edit_message_text('Выбери пункт, по которому хочешь получить результат:', chat_id, msg_id, reply_markup = keyboard)
-
-      record_func(user, call.data)
-
-      testbot.answer_callback_query(call.id)
+      msg = 'Выбери пункт, по которому хочешь получить результат:'
     # -----------------------------------------------------
 
     # Деньги ---> {Поступления}, {Реализация}
@@ -177,11 +169,7 @@ def test_callback(call):
       keyboard.add(button_cash_receipts, button_implementation)
       keyboard.add(inmenu)
 
-      testbot.edit_message_text('Выбери пункт, по которому хочешь получить результат:', chat_id, msg_id, reply_markup = keyboard)
-
-      record_func(user, call.data)
-
-      testbot.answer_callback_query(call.id)
+      msg = 'Выбери пункт, по которому хочешь получить результат:'
     # -----------------------------------------------------
 
     # Продажи ---> {Услуги}, {Оборудование}
@@ -192,11 +180,7 @@ def test_callback(call):
       keyboard.add(button_services, button_equipment);
       keyboard.add(inmenu)
 
-      testbot.edit_message_text('Выбери пункт, по которому хочешь получить результат:', chat_id, msg_id, reply_markup = keyboard)
-
-      record_func(user, call.data)
-
-      testbot.answer_callback_query(call.id)
+      msg = 'Выбери пункт, по которому хочешь получить результат:'
     # -----------------------------------------------------
 
     # {МКД}, {Общая}, {Гепон}
@@ -212,11 +196,7 @@ def test_callback(call):
         keyboard.add(button_general, button_gepon)
       keyboard.add(back, inmenu)
 
-      testbot.edit_message_text('Выбери пункт, по которому хочешь получить результат:', chat_id, msg_id, reply_markup = keyboard)
-
-      record_func(user, call.data)
-
-      testbot.answer_callback_query(call.id)
+      msg = 'Выбери пункт, по которому хочешь получить результат:'
     # -----------------------------------------------------
 
     # {Все города}, {По городам}, {По районам}
@@ -231,11 +211,7 @@ def test_callback(call):
         keyboard.add(button_all_cities, button_by_city, button_by_district)
       keyboard.add(back, inmenu)
 
-      testbot.edit_message_text('Выбери пункт, по которому хочешь получить результат:', chat_id, msg_id, reply_markup = keyboard)
-
-      record_func(user, call.data)
-
-      testbot.answer_callback_query(call.id)
+      msg = 'Выбери пункт, по которому хочешь получить результат:'
     # -----------------------------------------------------
 
     # {По статусу}, {Платящая}
@@ -246,11 +222,7 @@ def test_callback(call):
       keyboard.add(button_by_status, button_by_paying)
       keyboard.add(back, inmenu)
 
-      testbot.edit_message_text('Выбери пункт, по которому хочешь получить результат:', chat_id, msg_id, reply_markup = keyboard)
-
-      record_func(user, call.data)
-
-      testbot.answer_callback_query(call.id)
+      msg = 'Выбери пункт, по которому хочешь получить результат:'
     # -----------------------------------------------------
 
     # {Текущий месяц}, {Предыдущий месяц}, {Текущий год}, {Статистика за 3 года}
@@ -267,11 +239,7 @@ def test_callback(call):
         keyboard.add(button_this_year, button_statistics_3years)
       keyboard.add(back, inmenu)
 
-      testbot.edit_message_text('Выбери пункт, по которому хочешь получить результат:', chat_id, msg_id, reply_markup = keyboard)
-
-      record_func(user, call.data)
-
-      testbot.answer_callback_query(call.id)
+      msg = 'Выбери пункт, по которому хочешь получить результат:'
     # -----------------------------------------------------
 
     # {По всем каналам}, {Выбор канала}
@@ -282,11 +250,7 @@ def test_callback(call):
       keyboard.add(button_all_channels, button_selection_channel)
       keyboard.add(back, inmenu)
 
-      testbot.edit_message_text('Выбери пункт, по которому хочешь получить результат:', chat_id, msg_id, reply_markup = keyboard)
-
-      record_func(user, call.data)
-
-      testbot.answer_callback_query(call.id)
+      msg = 'Выбери пункт, по которому хочешь получить результат:'
     # -----------------------------------------------------
 
     # {Таблица}, {Диаграмма}, {Эксель}
@@ -298,11 +262,7 @@ def test_callback(call):
       keyboard.add(button_table, button_diagram, button_excel)
       keyboard.add(back, inmenu)
 
-      testbot.edit_message_text('Выбери пункт, по которому хочешь получить результат:', chat_id, msg_id, reply_markup = keyboard)
-
-      record_func(user, call.data)
-
-      testbot.answer_callback_query(call.id)
+      msg = 'Выбери пункт, по которому хочешь получить результат:'
     # -----------------------------------------------------
 
     elif call.data == "inmenu":
@@ -313,15 +273,23 @@ def test_callback(call):
       keyboard.add(button_ACB)
       keyboard.add(button_money, button_sales)
 
-      testbot.edit_message_text("Вы вернулись в главное меню.\n Какую информацию ты хочешь узнать? 💬", chat_id, msg_id, reply_markup = keyboard)
+      msg = 'Вы вернулись в главное меню.\nКакую информацию ты хочешь узнать? 💬'
 
       user.history.clear()
-
-      testbot.answer_callback_query(call.id)
+    # -----------------------------------------------------
 
     else:
       if call.data != 'reload':
         testbot.send_message(chat_id, "Error. Data: " + str(call.data))
         testbot.answer_callback_query(call.id)
+        return
+
+    if call.data not in ['back', 'reload', 'inmenu']:
+      record_func(user, call.data)
+    
+    if call.data not in ['back', 'reload']:
+      testbot.edit_message_text(msg, chat_id, msg_id, reply_markup = keyboard)
+
+    testbot.answer_callback_query(call.id)
 
 testbot.infinity_polling()
